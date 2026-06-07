@@ -1,0 +1,20 @@
+[ 
+  { "url": "https://youtu.be/nJWBU7M6RdA?si=a5zM3anKlfMKkfgG", "type": "youtube", "note": "auto-captions only" },
+  { "url": "https://www.youtube.com/watch?v=vPb7d28RFNE", "type": "youtube", "note": "auto-captions only" },
+  { "url": "https://claude.com/blog/lessons-from-building-claude-code-how-we-use-skills", "type": "article", "note": "clean blog" },
+  { "url": "https://vercel.com/blog/introducing-deepsec-find-and-fix-vulnerabilities-in-your-code-base", "type": "article", "note": "clean blog" },
+  { "url": "https://x.com/wadefoster/status/2062517977938010121", "type": "x", "note": "thread + external link" },
+  { "url": "https://x.com/OpenAIDevs/status/2057530209470210453", "type": "x", "note": "thread + external link" },
+  { "url": "https://x.com/trq212/status/2061907337154367865", "type": "x", "note": "X article" },
+  { "url": "https://x.com/addyosmani/status/2059844244907696186", "type": "x", "note": "X article" },
+  { "url": "https://x.com/aiedge_/status/2057816817708789940", "type": "x", "note": "X article" },
+  { "url": "https://x.com/zodchiii/status/2057071039314542668", "type": "x", "note": "X article" },
+  { "url": "https://x.com/0xwhrrari/status/2060468027703849017", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/DataChaz/status/2049796012370473241", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/NainsiDwiv50980/status/2057038989962653805", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/eng_khairallah1/status/2058196384969547794", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/0xMovez/status/2058193075181089247", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/rubenhassid/status/2057325513962574280", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/PrajwalTomar_/status/2056347864822083809", "type": "x", "note": "single tweet + linked X article" },
+  { "url": "https://x.com/i/status/1111111111111111111", "type": "x", "note": "deleted/unavailable — robustness test, should fail gracefully" }
+]

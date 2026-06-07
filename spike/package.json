@@ -1,0 +1,16 @@
+{
+  "name": "signal-brain-fetch-spike",
+  "private": true,
+  "type": "module",
+  "description": "THROWAWAY Phase 0 fetch spike — delete after the GO/NO-GO call.",
+  "scripts": {
+    "spike": "tsx fetch-spike.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  },
+  "dependencies": {
+    "youtube-transcript": "^1.2.1",
+    "pdf-parse": "^1.1.1"
+  }
+}
