@@ -17,7 +17,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      # Use `npm install`, not `npm ci`: the lockfile is generated on Windows and npm
+      # can't fully represent the cross-platform optional native deps (@emnapi/* via
+      # sharp/lightningcss wasm fallbacks), so strict `npm ci` fails on Linux runners.
+      # See npm/cli#4828. `npm install` reconciles the same locked versions.
+      - run: npm install --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
