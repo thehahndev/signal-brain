@@ -34,8 +34,8 @@ export interface RankRun {
 
 function serializeItems(items: Item[]): string {
   return items
-    .map((it, i) => {
-      const header = `### Item ${i + 1}\nid: ${it.id}\nsource_type: ${it.source_type}\nurl: ${it.url}`;
+    .map((it) => {
+      const header = `### Item ${it.ref}\nid: ${it.ref}\nsource_type: ${it.source_type}\nurl: ${it.url}`;
       const title = it.title ? `\ntitle: ${it.title}` : '';
       return `${header}${title}\n\n${it.text}`;
     })
@@ -47,9 +47,9 @@ function validate(parsed: unknown, items: Item[]): RankResult {
     throw new Error('Ranking output missing `items` array.');
   }
   const out = parsed as RankResult;
-  const ids = new Set(items.map((i) => i.id));
+  const refs = new Set(items.map((i) => i.ref));
   for (const r of out.items as RankedItem[]) {
-    if (!ids.has(r.id)) throw new Error(`Ranking returned unknown id: ${r.id}`);
+    if (!refs.has(r.id)) throw new Error(`Ranking returned unknown id: ${r.id}`);
   }
   return out;
 }

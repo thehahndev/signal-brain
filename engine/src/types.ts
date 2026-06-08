@@ -3,6 +3,8 @@ export type SourceType = 'x' | 'youtube' | 'article' | 'pdf' | 'other';
 /** A captured item, fetched + cleaned, ready to feed the ranking call. */
 export interface Item {
   id: string;
+  /** Short, model-facing handle (e.g. "1".."17") — long ids get mangled on echo. */
+  ref: string;
   source_type: SourceType;
   url: string;
   adapter: string;

@@ -40,7 +40,7 @@ export function loadFixtures(): Item[] {
     const { title, text } = clean(raw, source_type);
     const fetch_miss = isFetchMiss(raw.length, raw);
 
-    items.push({ id, source_type, url: header.url, adapter: header.adapter, title, text, fetch_miss });
+    items.push({ id, ref: '', source_type, url: header.url, adapter: header.adapter, title, text, fetch_miss });
   }
   return items;
 }

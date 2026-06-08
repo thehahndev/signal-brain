@@ -13,7 +13,7 @@ function shortUrl(url: string): string {
 
 /** Render the ranked batch in the PLAN §5 digest shape, so output is judged how it'll be consumed. */
 export function renderDigest(run: RankRun, items: Item[]): string {
-  const byId = new Map(items.map((i) => [i.id, i]));
+  const byId = new Map(items.map((i) => [i.ref, i]));
   const ranked = [...run.result.items].sort((a, b) => b.score - a.score);
 
   const reads = ranked.filter((r) => r.verdict === 'read');

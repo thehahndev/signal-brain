@@ -32,6 +32,8 @@ async function main() {
   const misses = items.filter((i) => i.fetch_miss);
   items = items.filter((i) => !i.fetch_miss);
   if (flags.limit) items = items.slice(0, flags.limit);
+  // Assign short, contiguous refs — the model echoes these reliably; long ids get mangled.
+  items = items.map((it, i) => ({ ...it, ref: String(i + 1) }));
 
   console.error(
     `Loaded ${items.length} items for ranking` +

@@ -58,24 +58,27 @@ on every axis. The fetch risk is **retired**. Don't second-guess this; it's empi
   $0) but mostly point to the tweet's own attached media, not external content — would need a
   resolve-then-filter step in `lib/fetch/x.ts` in Phase 2. See `spike/scorecard.md` for detail.
 
-## NEXT ACTION (pick up here — Phase 1: the judgment engine)
-**Phase 0 is DONE — fetch risk retired, GO decision recorded in `spike/scorecard.md`.**
-Build the **judgment engine**: a local script, no infra/surface yet.
-1. Write `rubric.md` — the single source of truth for what counts as signal vs. noise vs. opportunity,
-   tuned to the user's north star (AI software dev + novel AI products/ideas to build/sell/market).
-2. Design **one structured (JSON-schema) Claude/Sonnet call** that takes full-extracted item text +
-   rubric.md and returns: score, signal/hype verdict, cluster grouping (dedupe), and an opportunity flag.
-3. Thin local-script plumbing to feed it real captured content (reuse `spike/out/*.md` captures as
-   test fixtures — they're real, full-extracted, and already on disk) and inspect the structured output.
-4. Iterate on the rubric and prompt against real examples until the ranking output earns the word
-   "ruthless." This is taste-calibration work — the differentiator of the whole project rides on it.
+## NEXT ACTION (pick up here — Phase 2: plumbing)
+**Phase 1 is DONE — judgment engine built and CONVERGED (2026-06-08).** It lives in `engine/` (TypeScript,
+tsx, `@anthropic-ai/sdk`): one structured `claude-sonnet-4-6` call (adaptive thinking, `effort: high`,
+`output_config.format` JSON schema, rubric cached) over the whole batch → score / verdict (read|skim|bury) /
+signal_or_hype / opportunity_flag / cluster_id / why / key_claims. `engine/rubric.md` is the tuned taste
+(north star, rank-up/bury, signal-vs-hype, hard-reserved 🟢 opportunity flag, a "skim floor" for credible
+summaries, conservative clustering, seeded exemplars). `engine/src/clean.ts` strips Jina/transcript chrome.
+Calibrated against the 18 real `spike/out/*.md` fixtures until the ranking reads ruthless (final: 5 read /
+4 skim / 8 buried, 0 over-flagged opportunities). Run: `cd engine && npm run rank` (needs `ANTHROPIC_API_KEY`
+in `engine/.env`; `--json`, `--limit N`, `--model` flags). ~$0.18/run.
 
-No infra (Telegram/Neon/Cron) needed yet — that's Phase 2, after this engine produces output you trust.
+**Phase 2 — plumbing (build this next):** Telegram bot (webhook capture + push), Neon Postgres, Vercel Cron,
+wire the Phase-0 fetchers (`lib/fetch/*`: X+articles→Jina, YouTube→youtube-transcript) and the Phase-1 engine
+(graduate `engine/` logic into `lib/`), single full-extract step (two-pass is dropped), daily digest with
+buttons. Model/effort for Phase 2 is more mechanical — Sonnet at medium effort is likely the better trade-off.
 
 ## Phase roadmap (summary — full detail in PLAN.md §8)
 - **Phase 0** — Fetch spike (GATES everything). ✅ DONE 2026-06-07 → GO (Jina). Throwaway harness in `spike/`.
-- **Phase 1** — Judgment engine (real build-first): local script, rubric + ranking call, no infra/surface. ← we are here
-- **Phase 2** — Plumbing: Telegram bot + Neon + Vercel Cron + wire fetchers/engine + digest. (NOTE:
+- **Phase 1** — Judgment engine (real build-first): local script, rubric + ranking call, no infra/surface.
+  ✅ DONE 2026-06-08 → CONVERGED. Built in `engine/`; ranking reads ruthless on the 18 fixtures.
+- **Phase 2** — Plumbing: Telegram bot + Neon + Vercel Cron + wire fetchers/engine + digest. ← we are here (NOTE:
   two-pass is dropped — see above — so "wire fetchers" is now a single full-extract step, not two.)
 - **Phase 3** — Close feedback loop (👍/👎 → rubric commit; `→ brain` tags gold).
 - **Phase 4+** — Deferred: dev-brain auto-promotion, searchable archive, PWA feed.
