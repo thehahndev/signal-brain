@@ -107,9 +107,17 @@ original "third-party X API" hypothesis below the line) · rubric as markdown in
 - `prompts/greenfield-mvp-planning.md` — the 10-section planning format PLAN.md follows.
 - `howtos/ai-development-workflow.md` — the plan→implement→review loop.
 
-## Model/effort guidance for Phase 1
-**Opus, high effort.** This phase is fundamentally taste-calibration — designing a rubric and ranking
-prompt that makes nuanced "signal vs. noise" / "is this an opportunity" judgment calls. That's the
-entire differentiator of "ruthless." Concentrated reasoning quality on a few small artifacts beats
-throughput here. (Phase 2 — infra/plumbing — is more mechanical; Sonnet at medium effort will likely
-be the better trade-off there. Re-evaluate when you get to it.)
+## Model/effort guidance (by phase)
+- **Phase 1 — Opus, high effort.** Fundamentally taste-calibration — designing a rubric and ranking
+  prompt that makes nuanced "signal vs. noise" / "is this an opportunity" judgment calls. That's the
+  entire differentiator of "ruthless." Concentrated reasoning quality on a few small artifacts beats
+  throughput here.
+- **Phase 2 — Sonnet, medium effort (confirmed).** Infra/plumbing was mechanical (Next.js routes,
+  fetch adapters, Drizzle/Neon, Telegram, cron); medium-effort Sonnet was the right trade-off, bumping
+  only for the webhook + digest-assembly + migrations. The *runtime ranking call* stays `claude-sonnet-4-6`.
+- **Phase 3 — mostly Sonnet/medium, with Opus/high for the taste-sensitive bits.** The plumbing — GitHub
+  API commit-back, switching the rubric read to GitHub-raw, `→ brain` dev-brain promotion — is mechanical
+  (Sonnet, medium). But two pieces are taste-calibration and deserve Opus/high: (1) *designing how a 👍/👎
+  becomes an exemplar line* — the format and phrasing that actually steers the rubric without bloating it
+  (same craft as Phase 1's exemplar seeding), and (2) *verifying the loop drifts ranking toward taste*
+  after feedback accrues. Don't let an auto-appended exemplar degrade the converged rubric — review drift.
