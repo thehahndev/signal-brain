@@ -52,32 +52,46 @@ export interface RankOptions {
   /** The verbatim rubric.md text — the taste. Injected so the call has no file IO. */
   rubric: string;
   model?: string;
+  /** Hard wall-clock cap on the call (ms). Aborts inside try/catch before the
+   *  serverless 60s function limit hard-kills us. Default 45s. */
+  timeoutMs?: number;
+  /** Reasoning depth / token spend. Lower = faster + cheaper, less thorough. Default 'high'. */
+  effort?: 'low' | 'medium' | 'high' | 'max';
 }
+
+// Thinking tokens count toward max_tokens, so this is the effective bound on how
+// long the call can run. The structured output for a batch is small (~100 tokens
+// /item even at the backlog cap), so 16000 leaves generous adaptive-thinking room
+// at effort:high while keeping worst-case latency well under the function limit.
+const MAX_TOKENS = 16000;
 
 export async function rank(items: Item[], opts: RankOptions): Promise<RankRun> {
   const model = opts.model ?? DEFAULT_MODEL;
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
 
-  const stream = client.messages.stream({
-    model,
-    max_tokens: 32000,
-    thinking: { type: 'adaptive' },
-    output_config: {
-      effort: 'high',
-      format: { type: 'json_schema', schema: RANK_SCHEMA as Record<string, unknown> },
-    },
-    system: [
-      { type: 'text', text: INSTRUCTIONS },
-      // Cache the rubric + instructions prefix so rapid calibration re-runs are cheap.
-      { type: 'text', text: `# Rubric\n\n${opts.rubric}`, cache_control: { type: 'ephemeral' } },
-    ],
-    messages: [
-      {
-        role: 'user',
-        content: `Rank the following ${items.length} items.\n\n${serializeItems(items)}`,
+  const stream = client.messages.stream(
+    {
+      model,
+      max_tokens: MAX_TOKENS,
+      thinking: { type: 'adaptive' },
+      output_config: {
+        effort: opts.effort ?? 'high',
+        format: { type: 'json_schema', schema: RANK_SCHEMA as Record<string, unknown> },
       },
-    ],
-  });
+      system: [
+        { type: 'text', text: INSTRUCTIONS },
+        // Cache the rubric + instructions prefix so rapid calibration re-runs are cheap.
+        { type: 'text', text: `# Rubric\n\n${opts.rubric}`, cache_control: { type: 'ephemeral' } },
+      ],
+      messages: [
+        {
+          role: 'user',
+          content: `Rank the following ${items.length} items.\n\n${serializeItems(items)}`,
+        },
+      ],
+    },
+    { signal: AbortSignal.timeout(opts.timeoutMs ?? 45_000) },
+  );
 
   const message = await stream.finalMessage();
   const textBlock = message.content.find((b) => b.type === 'text');
