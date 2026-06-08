@@ -58,7 +58,21 @@ on every axis. The fetch risk is **retired**. Don't second-guess this; it's empi
   $0) but mostly point to the tweet's own attached media, not external content — would need a
   resolve-then-filter step in `lib/fetch/x.ts` in Phase 2. See `spike/scorecard.md` for detail.
 
-## NEXT ACTION (pick up here — Phase 2: plumbing)
+## NEXT ACTION (pick up here — Phase 3: close the feedback loop)
+**Phase 2 is DONE — input pipeline built, deployed, and LIVE (2026-06-08).** Lives in the Next.js App
+Router app at the repo root (`app/`, `lib/`), deployed to `https://signal-brain.vercel.app` (prod-on-main,
+Vercel + Neon `neon-indigo-castle` + GitHub-connected CI). Telegram capture → Jina/transcript fetch → the
+graduated engine (`lib/engine/`, reads root `rubric.md`) → daily cron digest (07:00 local) with
+`[👍][👎][→ brain]` buttons. Verified live end-to-end (shared links captured, digest pushed correctly-ranked
+cards). Engine `rank()` now takes the rubric as a param; `engine/` stays as the calibration harness importing
+`lib/engine` + root `rubric.md` (one source of truth). Plan: `~/.claude/plans/hidden-gliding-summit.md`.
+
+**Phase 3 — close the loop (build this next):** the 👍/👎 buttons already store `items.feedback` (gold/noise)
+and the `→ brain` button is wired but stubbed. Phase 3 commits an exemplar line back into `rubric.md` via the
+GitHub API on feedback (the rubric becomes read-via-GitHub-raw so the deployed bundle isn't stale), and
+`→ brain` promotes gold into the dev-brain vault. See PLAN §8 Phase 3.
+
+## Historical: Phase 1 → Phase 2 handoff (superseded by the above)
 **Phase 1 is DONE — judgment engine built and CONVERGED (2026-06-08).** It lives in `engine/` (TypeScript,
 tsx, `@anthropic-ai/sdk`): one structured `claude-sonnet-4-6` call (adaptive thinking, `effort: high`,
 `output_config.format` JSON schema, rubric cached) over the whole batch → score / verdict (read|skim|bury) /
@@ -78,9 +92,9 @@ buttons. Model/effort for Phase 2 is more mechanical — Sonnet at medium effort
 - **Phase 0** — Fetch spike (GATES everything). ✅ DONE 2026-06-07 → GO (Jina). Throwaway harness in `spike/`.
 - **Phase 1** — Judgment engine (real build-first): local script, rubric + ranking call, no infra/surface.
   ✅ DONE 2026-06-08 → CONVERGED. Built in `engine/`; ranking reads ruthless on the 18 fixtures.
-- **Phase 2** — Plumbing: Telegram bot + Neon + Vercel Cron + wire fetchers/engine + digest. ← we are here (NOTE:
-  two-pass is dropped — see above — so "wire fetchers" is now a single full-extract step, not two.)
-- **Phase 3** — Close feedback loop (👍/👎 → rubric commit; `→ brain` tags gold).
+- **Phase 2** — Plumbing: Telegram bot + Neon + Vercel Cron + wire fetchers/engine + digest. ✅ DONE + LIVE
+  2026-06-08 (`signal-brain.vercel.app`). Single full-extract (two-pass dropped).
+- **Phase 3** — Close feedback loop (👍/👎 → rubric commit; `→ brain` tags gold). ← we are here.
 - **Phase 4+** — Deferred: dev-brain auto-promotion, searchable archive, PWA feed.
 
 ## Stack (agreed)
