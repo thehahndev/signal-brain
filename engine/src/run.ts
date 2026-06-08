@@ -1,7 +1,13 @@
 import 'dotenv/config';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadFixtures } from './fixtures.ts';
-import { rank, DEFAULT_MODEL } from './rank.ts';
+import { rank, DEFAULT_MODEL } from '../../lib/engine/rank.ts';
 import { renderDigest } from './render.ts';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const RUBRIC_PATH = join(HERE, '..', '..', 'rubric.md');
 
 interface Flags {
   json: boolean;
@@ -41,7 +47,8 @@ async function main() {
       `. Calling ${flags.model}…`,
   );
 
-  const run = await rank(items, flags.model);
+  const rubric = readFileSync(RUBRIC_PATH, 'utf8');
+  const run = await rank(items, { rubric, model: flags.model });
 
   if (flags.json) {
     console.log(JSON.stringify(run.result, null, 2));

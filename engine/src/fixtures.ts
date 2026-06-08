@@ -1,8 +1,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { clean, isFetchMiss } from './clean.ts';
-import type { Item, SourceType } from './types.ts';
+import { clean, isFetchMiss } from '../../lib/engine/clean.ts';
+import type { Item, SourceType } from '../../lib/engine/types.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, '..', '..', 'spike', 'out');

@@ -1,12 +1,6 @@
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
-import { RANK_SCHEMA } from './schema.ts';
-import type { Item, RankResult, RankedItem } from './types.ts';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-const RUBRIC_PATH = join(HERE, '..', 'rubric.md');
+import { RANK_SCHEMA } from './schema';
+import type { Item, RankResult, RankedItem } from './types';
 
 export const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
@@ -43,7 +37,7 @@ function serializeItems(items: Item[]): string {
 }
 
 function validate(parsed: unknown, items: Item[]): RankResult {
-  if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as any).items)) {
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { items?: unknown }).items)) {
     throw new Error('Ranking output missing `items` array.');
   }
   const out = parsed as RankResult;
@@ -54,9 +48,15 @@ function validate(parsed: unknown, items: Item[]): RankResult {
   return out;
 }
 
-export async function rank(items: Item[], model = DEFAULT_MODEL): Promise<RankRun> {
+export interface RankOptions {
+  /** The verbatim rubric.md text — the taste. Injected so the call has no file IO. */
+  rubric: string;
+  model?: string;
+}
+
+export async function rank(items: Item[], opts: RankOptions): Promise<RankRun> {
+  const model = opts.model ?? DEFAULT_MODEL;
   const client = new Anthropic(); // reads ANTHROPIC_API_KEY from env
-  const rubric = readFileSync(RUBRIC_PATH, 'utf8');
 
   const stream = client.messages.stream({
     model,
@@ -69,7 +69,7 @@ export async function rank(items: Item[], model = DEFAULT_MODEL): Promise<RankRu
     system: [
       { type: 'text', text: INSTRUCTIONS },
       // Cache the rubric + instructions prefix so rapid calibration re-runs are cheap.
-      { type: 'text', text: `# Rubric\n\n${rubric}`, cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: `# Rubric\n\n${opts.rubric}`, cache_control: { type: 'ephemeral' } },
     ],
     messages: [
       {

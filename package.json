@@ -1,0 +1,42 @@
+{
+  "name": "signal-brain",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Signal Brain — a ruthless attention-filter for AI-dev content. Telegram capture → Jina/transcript fetch → Claude ranking engine → daily digest.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"lib/**/*.test.ts\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "seed:clear": "tsx scripts/clear-seed.ts",
+    "digest:local": "tsx scripts/run-digest.ts",
+    "seed:local": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "drizzle-orm": "^0.45.2",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "youtube-transcript": "^1.2.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^16.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
