@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config(); // .env fallback (dotenv does not override already-set vars)
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({

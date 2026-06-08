@@ -3,7 +3,9 @@
  * + cleaned), so the digest pipeline can be exercised end-to-end without network.
  * Run: npm run seed:local
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config(); // .env fallback (dotenv does not override already-set vars)
 import { db } from '../lib/db/client';
 import { items as itemsTable } from '../lib/db/schema';
 import { loadFixtures } from '../engine/src/fixtures';

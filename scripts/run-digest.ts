@@ -4,7 +4,9 @@
  * Run: npm run digest:local            (dry run)
  *      npm run digest:local -- --send  (push to Telegram)
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config(); // .env fallback (dotenv does not override already-set vars)
 import { runDigest } from '../lib/digest/pipeline';
 
 async function main() {
