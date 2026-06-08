@@ -9,7 +9,15 @@ import { sendMessage } from '../telegram/send';
 import { assembleDigest, digestCounts } from './assemble';
 
 /** Cap the backlog per run so the ranking call stays bounded if captures pile up. */
-const MAX_BACKLOG = 40;
+// Hard cap on items ranked per run. The ranking call's latency is dominated by
+// thinking time; on Vercel Hobby (60s function limit) a batch of ~4 at effort:medium
+// completes in ~34s with cold-start headroom, where larger batches / effort:high blow
+// past 60s. Oldest-first (FIFO) so nothing is starved; a heavy day drains over a few days.
+const MAX_BACKLOG = 4;
+
+// effort:high is the converged calibration but takes ~55s+ even on a small batch —
+// over Hobby's 60s limit. medium keeps the taste close and fits comfortably.
+const RUNTIME_EFFORT = 'medium' as const;
 
 export interface DigestOptions {
   /** Bypass the one-per-day idempotency guard (local/manual re-runs). */
@@ -87,28 +95,34 @@ export async function runDigest(opts: DigestOptions = {}): Promise<DigestOutcome
     }));
 
     // 4. Rank the whole batch in one call (clustering needs to see everything).
-    const run = await rank(items, { rubric: loadRubric(), model: opts.model });
+    const run = await rank(items, { rubric: loadRubric(), model: opts.model, effort: RUNTIME_EFFORT });
     const byRef = new Map(items.map((it) => [it.ref, it]));
 
     // 5. Persist verdicts + mark surfaced (read/skim/bury all leave the backlog).
-    for (const r of run.result.items) {
-      const it = byRef.get(r.id);
-      if (!it) continue;
-      await d
-        .update(itemsTable)
-        .set({
-          score: r.score,
-          signalOrHype: r.signal_or_hype,
-          verdict: r.verdict,
-          opportunityFlag: r.opportunity_flag,
-          clusterId: r.cluster_id,
-          why: r.why,
-          keyClaims: r.key_claims,
-          rankedAt: now,
-          surfacedInRun: runId,
-        })
-        .where(eq(itemsTable.id, it.id));
-    }
+    // Writes are order-independent — run them in parallel to keep the function
+    // comfortably under the serverless time limit (sequential round-trips added up).
+    await Promise.all(
+      run.result.items.flatMap((r) => {
+        const it = byRef.get(r.id);
+        if (!it) return [];
+        return [
+          d
+            .update(itemsTable)
+            .set({
+              score: r.score,
+              signalOrHype: r.signal_or_hype,
+              verdict: r.verdict,
+              opportunityFlag: r.opportunity_flag,
+              clusterId: r.cluster_id,
+              why: r.why,
+              keyClaims: r.key_claims,
+              rankedAt: now,
+              surfacedInRun: runId,
+            })
+            .where(eq(itemsTable.id, it.id)),
+        ];
+      }),
+    );
 
     // 6. Assemble + push the digest; record message ids for READ cards (Phase-3 edits).
     const messages = assembleDigest(run, items, now);
