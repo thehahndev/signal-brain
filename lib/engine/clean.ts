@@ -1,4 +1,4 @@
-import type { SourceType } from './types.ts';
+import type { SourceType } from './types';
 
 /**
  * Thin heuristic cleaner for Jina/transcript captures. The Jina markdown carries
