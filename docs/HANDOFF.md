@@ -77,7 +77,8 @@ bridge from serverless to the *local* dev-brain vault); `items.promotedAt` (migr
 double-commit guard; `app/api/telegram/route.ts#handleCallback` wires all three buttons via `after()`. See PLAN §8.
 
 ### Resuming Phase 3 safely
-The branch was cut **before** the 2026-06-09 cron-timeout fix landed on `main`, so it is now BEHIND `main` and
+**A copy-paste kick-off prompt for a fresh session is in [`phase-3-kickoff.md`](phase-3-kickoff.md).** The
+branch was cut **before** the 2026-06-09 cron-timeout fix landed on `main`, so it is now BEHIND `main` and
 WILL conflict. Resume in this order:
 1. **Merge `main` into the branch first:** `git switch phase-3-feedback-loop && git merge main`. Expect a
    conflict in `lib/digest/pipeline.ts` at the `rank(...)` call (both sides changed that line). **Keep BOTH** —
