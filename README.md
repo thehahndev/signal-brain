@@ -12,7 +12,8 @@ dev-brain keeps the gold.
 - **Phase 0** — fetch spike → Jina for X+articles, `youtube-transcript` for YouTube. ✅
 - **Phase 1** — judgment engine (`rubric.md` + one structured Claude call). ✅ converged.
 - **Phase 2** — Telegram capture + Neon + Vercel Cron + daily digest. ← this.
-- **Phase 3** — close the 👍/👎 → rubric commit-back loop. (not yet)
+- **Phase 3** — close the 👍/👎 → rubric commit-back loop. Built on branch `phase-3-feedback-loop`,
+  not yet merged/shipped (see [`docs/HANDOFF.md`](docs/HANDOFF.md) → "Resuming Phase 3 safely").
 
 Background: [`docs/HANDOFF.md`](docs/HANDOFF.md) · [`docs/PLAN.md`](docs/PLAN.md) · [`spike/scorecard.md`](spike/scorecard.md)
 
@@ -22,7 +23,7 @@ Background: [`docs/HANDOFF.md`](docs/HANDOFF.md) · [`docs/PLAN.md`](docs/PLAN.m
 Telegram share ─▶ POST /api/telegram ─▶ capture: normalize → dedup → fetch (Jina / transcript) → store
                                          callback: 👍/👎 feedback
 
-Vercel Cron ────▶ GET /api/cron/digest ─▶ rank un-surfaced backlog (engine + rubric.md)
+Vercel Cron ────▶ GET /api/cron/digest ─▶ rank ≤4 oldest un-surfaced items (engine + rubric.md, effort:medium)
                                           → assemble per-card messages → push → mark surfaced
 ```
 
@@ -58,7 +59,9 @@ npm run typecheck && npm run lint && npm test && npm run build   # the CI gate
    `DATABASE_URL` is injected automatically.
 3. **Env** — set `ANTHROPIC_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, a random
    `TELEGRAM_WEBHOOK_SECRET`, and a random `CRON_SECRET` in Vercel.
-4. **Deploy** — push to Vercel. The daily cron is configured in [`vercel.json`](vercel.json) (`0 7 * * *`).
+4. **Deploy** — push to Vercel. The daily cron is configured in [`vercel.json`](vercel.json)
+   (`30 21 * * *` UTC = 07:00 local). Note: on Vercel Hobby the ranking runs at `effort:medium` with a
+   4-item/run cap to fit the 60s function limit; `effort:high` needs Vercel Pro (300s). See HANDOFF → Runtime constraints.
 5. **Register the webhook** (once, against the prod URL):
    ```bash
    curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \

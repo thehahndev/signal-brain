@@ -52,6 +52,11 @@ None. Single allow-listed Telegram chat ID. No accounts.
 - Per-card messages sidestep Telegram's 4096-char limit and give per-item buttons.
 
 ## 6. Technical architecture
+> **Pre-build plan — superseded in places by what actually shipped.** Two-pass was DROPPED (single
+> full-extract at capture); cron lives in `vercel.json` not `vercel.ts`; and on Vercel Hobby the runtime
+> ranking runs at **effort:medium with a 4-item/run FIFO cap** (60s function limit). See
+> [`HANDOFF.md`](HANDOFF.md) → "Runtime constraints" for the current reality.
+
 - Next.js App Router on Vercel, TypeScript.
 - `/api/telegram` route handler = bot webhook (inbound shares = capture; button callbacks = feedback). No polling.
 - `/api/cron/digest` = daily pipeline via Vercel Cron (configured in `vercel.ts`).
