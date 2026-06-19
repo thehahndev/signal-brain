@@ -18,6 +18,50 @@ const TRACKING_PARAMS = [
 /** YouTube keeps `v` (and playlist `list`); everything else (incl. `si`, `t`) is noise. */
 const YOUTUBE_KEEP = new Set(['v', 'list']);
 
+/** Link shorteners whose URL is a wrapper — the real content is one redirect away. */
+const SHORTENER_HOSTS = new Set([
+  't.co',
+  'bit.ly',
+  'buff.ly',
+  'lnkd.in',
+  'ow.ly',
+  'tinyurl.com',
+  'trib.al',
+  'dlvr.it',
+]);
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+/** True if `url`'s host is a known link shortener (t.co, bit.ly, …). */
+export function isShortener(url: string): boolean {
+  return SHORTENER_HOSTS.has(hostOf(url));
+}
+
+/**
+ * Find the outbound link a link-only tweet points at: the first shortener URL in the
+ * text, else the first link that isn't the tweet's own x.com/Jina chrome. Used to
+ * recover the real content when a tweet's whole body is just an outbound link.
+ */
+export function findOutboundLink(text: string): string | null {
+  const matches = text.match(/https?:\/\/[^\s<>"')]+/gi) ?? [];
+  // Trim trailing punctuation the regex may have swept in (e.g. `…/abc".`).
+  const urls = matches.map((u) => u.replace(/["'.,)]+$/, ''));
+  const shortener = urls.find((u) => isShortener(u));
+  if (shortener) return shortener;
+  return (
+    urls.find((u) => {
+      const h = hostOf(u);
+      return h !== '' && h !== 'x.com' && h !== 'twitter.com' && !h.endsWith('jina.ai');
+    }) ?? null
+  );
+}
+
 function isTracking(key: string): boolean {
   return TRACKING_PARAMS.some((re) => re.test(key));
 }

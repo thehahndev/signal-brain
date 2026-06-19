@@ -51,6 +51,7 @@ function isNoiseLine(trimmed: string): boolean {
   if (/^\d[\d.,]*[KM]?$/.test(trimmed)) return true; // lone engagement count
   if (/Views\]\(/.test(trimmed)) return true; // view-count link
   if (/^Read \d/.test(trimmed)) return true; // "Read 48 replies"
+  if (/^Log\s?in\s?Sign\s?up$/i.test(trimmed)) return true; // run-together X login wall
   return false;
 }
 
@@ -112,4 +113,17 @@ export function clean(raw: string, _sourceType: SourceType): CleanResult {
 /** Deleted/missing page guard (scorecard: ~<700 chars + "cached snapshot"). */
 export function isFetchMiss(rawChars: number, raw: string): boolean {
   return rawChars < 700 && /cached snapshot/i.test(raw);
+}
+
+/**
+ * Count of "real" characters — text with URLs and whitespace removed. A link-only
+ * tweet ("# mem0 on X: \"https://t.co/…\" / X  Log inSign up") nets only a couple
+ * dozen here, which lets the fetch layer reject it as a hollow capture instead of
+ * stamping it `ok` and shipping a bare URL to the ranker.
+ */
+export function substanceLength(text: string): number {
+  return text
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/\s+/g, '')
+    .length;
 }

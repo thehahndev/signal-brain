@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeUrl, detectSourceType, extractUrl } from './normalize';
+import { normalizeUrl, detectSourceType, extractUrl, isShortener, findOutboundLink } from './normalize';
 
 test('normalizeUrl strips x.com share params and normalizes the host', () => {
   assert.equal(
@@ -54,4 +54,32 @@ test('extractUrl pulls the first link out of free text', () => {
     'https://x.com/a/status/1',
   );
   assert.equal(extractUrl('no link here'), null);
+});
+
+test('isShortener flags known link wrappers, not real hosts', () => {
+  assert.equal(isShortener('https://t.co/Cvv7bYHNuf'), true);
+  assert.equal(isShortener('https://bit.ly/abc'), true);
+  assert.equal(isShortener('https://example.com/post'), false);
+  assert.equal(isShortener('https://x.com/u/status/1'), false);
+  assert.equal(isShortener('garbage'), false);
+});
+
+test('findOutboundLink recovers the t.co from a link-only tweet capture', () => {
+  // Shape of the hollow Jina capture for a link-only tweet (real prod symptom).
+  const raw =
+    'Title: mem0 on X: "https://t.co/Cvv7bYHNuf" / X\n' +
+    'URL Source: https://x.com/i/status/2067305118891163833\n' +
+    'Markdown Content:\n# mem0 on X: "https://t.co/Cvv7bYHNuf" / X\nLog inSign up';
+  assert.equal(findOutboundLink(raw), 'https://t.co/Cvv7bYHNuf');
+});
+
+test('findOutboundLink prefers a non-x link when no shortener is present', () => {
+  const raw =
+    'URL Source: https://x.com/i/status/1\nMarkdown Content:\nSee https://github.com/foo/bar for the repo.';
+  assert.equal(findOutboundLink(raw), 'https://github.com/foo/bar');
+});
+
+test('findOutboundLink returns null when the tweet only references X/Jina', () => {
+  const raw = 'URL Source: https://x.com/i/status/1\nMarkdown Content:\nA real thought with no links.';
+  assert.equal(findOutboundLink(raw), null);
 });

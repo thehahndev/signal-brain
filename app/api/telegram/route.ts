@@ -47,7 +47,10 @@ export async function POST(req: Request): Promise<Response> {
   after(async () => {
     try {
       const res = await captureUrl(url);
-      const title = res.title ? `: ${res.title.slice(0, 120)}` : '';
+      // Never echo a bare URL as if it were a headline — a title that's just a link
+      // means the capture was hollow, so show no title rather than a misleading one.
+      const headline = res.title && !/^\s*https?:\/\/\S+\s*$/.test(res.title) ? res.title : '';
+      const title = headline ? `: ${headline.slice(0, 120)}` : '';
       const msg =
         res.outcome === 'captured'
           ? `✓ Captured${title}`
