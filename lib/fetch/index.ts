@@ -82,7 +82,10 @@ async function ogFallback(url: string): Promise<FetchResult | null> {
   const og = await fetchOgMetadata(url);
   const text = (og.text || og.title).trim();
   if (!text) return null;
-  return { status: 'ok', adapter: 'fallback:og', title: og.title, text, charCount: text.length };
+  // For an X post, og:title is just the author ("Foo (@bar) on X") while og:description
+  // carries the real headline — prefer the headline so the digest card isn't an author name.
+  const title = /\bon X$/i.test(og.title.trim()) && og.text.trim() ? og.text.trim() : og.title;
+  return { status: 'ok', adapter: 'fallback:og', title, text, charCount: text.length };
 }
 
 /**
