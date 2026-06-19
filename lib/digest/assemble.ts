@@ -71,15 +71,17 @@ export function assembleDigest(run: RankRun, items: Item[], now: Date = new Date
     messages.push({ text: body, buttons: cardButtons(it.id), itemId: it.id, disablePreview: true });
   }
 
-  // SKIM — one terse block.
+  // SKIM — one terse block. Each item carries its link (like READ cards) so a skim is
+  // one tap to open, no scrolling back to the title.
   if (skims.length) {
     const lines = skims.map((r) => {
       const it = byRef.get(r.id);
       const flag = r.opportunity_flag ? '🟢 ' : '';
       const title = escapeHtml(it?.title || it?.url || r.id);
-      return `${flag}• <b>${title}</b> — ${escapeHtml(r.why)}`;
+      const link = it?.url ? `\n<a href="${escapeHtml(it.url)}">${escapeHtml(shortUrl(it.url))}</a>` : '';
+      return `${flag}• <b>${title}</b> — ${escapeHtml(r.why)}${link}`;
     });
-    messages.push({ text: `<b>SKIM</b>\n${lines.join('\n')}` });
+    messages.push({ text: `<b>SKIM</b>\n${lines.join('\n\n')}` });
   }
 
   // BURIED — collapsed count + compact, auditable list of reasons.

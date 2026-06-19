@@ -92,10 +92,24 @@ test('clean recovers the embedded X-article card as the body', () => {
   assert.doesNotMatch(text, /New to X\?/); // tail marker cut
 });
 
-test('clean replaces a bare-URL tweet title with the article headline', () => {
+test('clean replaces a bare-URL tweet title with the article-card headline', () => {
   const { title } = clean(ARTICLE_LINK_TWEET, 'x');
-  assert.doesNotMatch(title, /https?:\/\//); // no longer a t.co
+  // No longer the t.co; leads with the article title. (fetchItem upgrades this to the
+  // exact og:description headline; clean()'s job is just to stop showing a bare URL.)
+  assert.doesNotMatch(title, /https?:\/\//);
   assert.match(title, /^Loop Engineering Works On Memory/);
+  assert.doesNotMatch(title, /recently tweeted/); // sharer lead-in cut
+});
+
+test('leadTitle bounds a byline-free prose excerpt instead of running away', () => {
+  const longCard =
+    'Title: foo on X: "https://t.co/x" / X\n\nMarkdown Content:\n' +
+    '[![Image 1: Article cover image](https://img) Article ' +
+    'Context Engineering for AI Agents: The Complete Playbook Your AI agent works great for the first 10 steps then degrades, forgetting instructions and making wrong tool calls over and over.' +
+    '](https://x.com/i/article/999)';
+  const { title } = clean(longCard, 'x');
+  assert.ok(title.length <= 102, `title too long: ${title.length}`);
+  assert.match(title, /^Context Engineering for AI Agents: The Complete Playbook/);
 });
 
 test('clean leaves a non-X-article capture title untouched', () => {

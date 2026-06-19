@@ -84,14 +84,28 @@ function isBareUrlTitle(title: string): boolean {
   return /"\s*https?:\/\/\S+\s*"/.test(title) || /^\s*https?:\/\/\S+\s*$/.test(title);
 }
 
-/** A display headline from the article-card text: the leading words, capped at ~70 chars. */
+/**
+ * A bounded display headline from the article-card text, which runs `<title> <excerpt>`
+ * with no machine delimiter between them. Cut at the one unambiguous marker some cards
+ * carry (a "… recently tweeted:" sharer lead-in), then cap at a word boundary so a prose
+ * excerpt can't run away. This is the stored fallback; `fetchItem` upgrades the title to
+ * the exact article headline via OG metadata when the page exposes it.
+ */
+const TITLE_CAP = 100;
 function leadTitle(s: string): string {
-  let out = '';
-  for (const w of s.split(/\s+/)) {
-    if (out && (out + ' ' + w).length > 70) break;
-    out = out ? `${out} ${w}` : w;
+  let t = s.trim();
+  const tweeted = t.search(/\s+recently tweeted\b/i);
+  if (tweeted > 0) t = t.slice(0, tweeted);
+
+  if (t.length > TITLE_CAP) {
+    let out = '';
+    for (const w of t.split(/\s+/)) {
+      if (out && (out + ' ' + w).length > TITLE_CAP) break;
+      out = out ? `${out} ${w}` : w;
+    }
+    t = `${out}…`;
   }
-  return out || s.slice(0, 70);
+  return t.replace(/[\s,:;–-]+$/, '').trim() || s.slice(0, TITLE_CAP);
 }
 
 export interface CleanResult {
