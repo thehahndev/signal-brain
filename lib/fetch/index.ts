@@ -89,6 +89,17 @@ async function ogFallback(url: string): Promise<FetchResult | null> {
 }
 
 /**
+ * The exact article headline for an X post that links an X long-form article: the tweet's
+ * og:description is the article title (the inline card only gives a title+excerpt run-on).
+ * Best-effort — returns null on any failure so the card-derived title stands.
+ */
+async function articleHeadline(url: string): Promise<string | null> {
+  const og = await fetchOgMetadata(url).catch(() => null);
+  const h = (og?.text || '').trim();
+  return h && h.length <= 160 ? h : null;
+}
+
+/**
  * Single full-extract fetch (two-pass is dropped). Dispatches by source_type to the
  * Phase-0 adapters — Jina for x/article/pdf/other, youtube-transcript for YouTube —
  * then degrades to OG metadata on any primary failure so a card is never empty.
@@ -113,6 +124,11 @@ export async function fetchItem(url: string, sourceType?: SourceType): Promise<F
       if (recovered) return recovered;
       const og = await ogFallback(url).catch(() => null);
       if (og) return og;
+    }
+    // Upgrade an X-article capture's run-on card title to the exact headline (og:description).
+    if (st === 'x' && result.status === 'ok' && /\/i\/article\//.test(raw)) {
+      const headline = await articleHeadline(url);
+      if (headline) result.title = headline;
     }
     return result;
   } catch (primaryErr) {
