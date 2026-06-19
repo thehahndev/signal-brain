@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clean, isFetchMiss } from './clean';
+import { clean, isFetchMiss, substanceLength } from './clean';
 
 const JINA_SAMPLE = `Title: Jane Dev on X: "Shipped a new agent harness" / X
 URL Source: https://x.com/janedev/status/1
@@ -42,4 +42,24 @@ test('isFetchMiss flags short cached-snapshot captures (deleted page)', () => {
 
 test('isFetchMiss is false for real content', () => {
   assert.equal(isFetchMiss(JINA_SAMPLE.length, JINA_SAMPLE), false);
+});
+
+test('clean drops the run-together Log inSign up wall', () => {
+  const linkOnly = `Title: mem0 on X: "https://t.co/Cvv7bYHNuf" / X
+URL Source: https://x.com/i/status/2067305118891163833
+Markdown Content:
+# mem0 on X: "https://t.co/Cvv7bYHNuf" / X
+Log inSign up`;
+  const { text } = clean(linkOnly, 'x');
+  assert.doesNotMatch(text, /Log\s?inSign\s?up/i);
+});
+
+test('substanceLength ignores URLs + whitespace, exposing hollow captures', () => {
+  // A link-only tweet shell nets a couple dozen real chars — below the fetch floor (40).
+  const shell = '# mem0 on X: "https://t.co/Cvv7bYHNuf" / X\nLog inSign up';
+  assert.ok(substanceLength(shell) < 40, `expected hollow, got ${substanceLength(shell)}`);
+  // Even a terse real tweet clears the floor comfortably.
+  assert.ok(
+    substanceLength('We shipped a new dynamic-workflow harness for Claude Code today.') >= 40,
+  );
 });
