@@ -48,10 +48,11 @@ function isNoiseLine(trimmed: string): boolean {
   if (/^\[!\[/.test(trimmed)) return true; // linked image
   if (/^#+\s*\[\]/.test(trimmed)) return true; // empty heading link "# []"
   if (/^\*?\s*\[[^\]]*\]\([^)]*\)\s*$/.test(trimmed)) return true; // link-only line
-  if (/^\d[\d.,]*[KM]?$/.test(trimmed)) return true; // lone engagement count
+  if (/^\d[\d.,KM]*(\s+\d[\d.,KM]*)*$/.test(trimmed)) return true; // engagement-count row(s): "1.2K" or "1 4 14"
   if (/Views\]\(/.test(trimmed)) return true; // view-count link
   if (/^Read \d/.test(trimmed)) return true; // "Read 48 replies"
   if (/^Log\s?in\s?Sign\s?up$/i.test(trimmed)) return true; // run-together X login wall
+  if (/^#\s+.*\bon X:.*\/\s*X\s*$/i.test(trimmed)) return true; // X tweet-title heading "# foo on X: ... / X"
   return false;
 }
 
@@ -62,13 +63,44 @@ function extractTitle(raw: string): string {
   return m[1].replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * An X long-form-article link renders in the tweet capture as an image-link card:
+ * `[![…Article cover image](img) Article <title> <excerpt…>](https://x.com/i/article/…)`.
+ * `clean()` would otherwise drop the whole line as a linked image, discarding the real
+ * content. Pull the title+excerpt text out so the ranker sees substance, not a bare URL.
+ */
+const ARTICLE_CARD_RE =
+  /\]\([^)]*\)\s*Article\s+([\s\S]*?)\]\(https?:\/\/[^)\s]*\/i\/article\/[^)\s]*\)/i;
+
+function articleCardText(raw: string): string | null {
+  const m = raw.match(ARTICLE_CARD_RE);
+  if (!m) return null;
+  const t = m[1].replace(/\s+/g, ' ').trim();
+  return t || null;
+}
+
+/** A tweet "title" whose quoted text is just a link (e.g. `mem0 on X: "https://t.co/…"`). */
+function isBareUrlTitle(title: string): boolean {
+  return /"\s*https?:\/\/\S+\s*"/.test(title) || /^\s*https?:\/\/\S+\s*$/.test(title);
+}
+
+/** A display headline from the article-card text: the leading words, capped at ~70 chars. */
+function leadTitle(s: string): string {
+  let out = '';
+  for (const w of s.split(/\s+/)) {
+    if (out && (out + ' ' + w).length > 70) break;
+    out = out ? `${out} ${w}` : w;
+  }
+  return out || s.slice(0, 70);
+}
+
 export interface CleanResult {
   title: string;
   text: string;
 }
 
 export function clean(raw: string, _sourceType: SourceType): CleanResult {
-  const title = extractTitle(raw);
+  let title = extractTitle(raw);
 
   // Prefer the body after `Markdown Content:` (Jina), else everything after the
   // `Published Time:` header line, else the whole thing (YouTube transcripts).
@@ -99,11 +131,24 @@ export function clean(raw: string, _sourceType: SourceType): CleanResult {
       .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
       .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
       .trim();
+    // Re-test after reduction: concatenated chrome links (e.g. `[Log in](…)[Sign up](…)`)
+    // only collapse to noise ("Log inSign up") once the link syntax is gone.
+    if (isNoiseLine(cleaned)) continue;
     kept.push(cleaned);
   }
 
   // Collapse runs of blank lines.
   let text = kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  // Recover the embedded X-article card (title+excerpt) that the linked-image filter
+  // dropped. For a link-only tweet this is the only real content; prepend it so it
+  // leads the body, and borrow it for the title when the tweet's own title is a bare URL.
+  const card = articleCardText(raw);
+  if (card) {
+    text = text ? `${card}\n\n${text}` : card;
+    if (!title || isBareUrlTitle(title)) title = leadTitle(card);
+  }
+
   if (text.length > MAX_CHARS) {
     text = text.slice(0, MAX_CHARS) + '\n…[truncated]';
   }
