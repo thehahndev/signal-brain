@@ -37,10 +37,14 @@ why, so the reviewer can agree or overrule. -->
 
 ## Outcome
 
-- **Verified.** <!-- Results WITH COUNTS, e.g. `npm test — 25 passed`,
-  typecheck and lint, plus any live check against production or queued
-  items. Distinguish "ran it" from "read it and it looks right"; name
-  what was not verified if it matters. -->
+- **Verified** <!-- a scannable list, one line per check; group alike
+  checks (typecheck and lint on one line). Each line names what ran and
+  its result WITH COUNTS and the claim-strength visible: `npm test — 25
+  passed` (executed) reads differently from "read it and it looks right"
+  (inspected); include any live check against production or queued items.
+  Put anything NOT verified on its own line, never buried at the tail of
+  a sentence. -->
+  -
 - **Risk.** <!-- What could break, what is hard to reverse, what you are
   unsure of — digest formatting regressions, the cron timeout budget
   (Vercel Hobby, 60 seconds), capture-pipeline changes that affect
